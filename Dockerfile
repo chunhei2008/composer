@@ -1,5 +1,7 @@
 FROM composer
 
+RUN composer config -g repo.packagist composer https://packagist.phpcomposer.com
+
 RUN docker-php-ext-install bcmath
 RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev && \
   docker-php-ext-configure gd \
