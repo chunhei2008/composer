@@ -1,23 +1,41 @@
-FROM composer
+FROM php:7.1
 
-RUN composer config -g repo.packagist composer https://packagist.phpcomposer.com
-
-RUN docker-php-ext-install bcmath
-
-RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev && \
-  docker-php-ext-configure gd \
-    --with-gd \
-    --with-freetype-dir=/usr/include/ \
-    --with-png-dir=/usr/include/ \
-    --with-jpeg-dir=/usr/include/ && \
-  NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) && \
-  docker-php-ext-install -j${NPROC} gd && \
-  apk del --no-cache freetype-dev libpng-dev libjpeg-turbo-dev
+MAINTAINER chunhei2008 <chunhei2008@qq.com>
 
 # Version
 ENV PHPREDIS_VERSION 4.0.0
 ENV HIREDIS_VERSION 0.13.3
 ENV SWOOLE_VERSION 4.3.4
+
+# Timezone
+RUN /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo 'Asia/Shanghai' > /etc/timezone
+
+# Libs
+RUN apt-get update \
+    && apt-get install -y \
+        curl \
+        wget \
+        git \
+        zip \
+        libz-dev \
+        libssl-dev \
+        libnghttp2-dev \
+        libpcre3-dev \
+    && apt-get clean \
+    && apt-get autoremove
+
+# Composer
+RUN curl -sS https://getcomposer.org/installer | php \
+    && mv composer.phar /usr/local/bin/composer \
+    && composer self-update --clean-backups \
+    && composer config -g repo.packagist composer https://packagist.phpcomposer.com
+
+# PDO extension
+RUN docker-php-ext-install pdo_mysql
+
+# Bcmath extension
+RUN docker-php-ext-install bcmath
 
 # Redis extension
 RUN wget http://pecl.php.net/get/redis-${PHPREDIS_VERSION}.tgz -O /tmp/redis.tar.tgz \
@@ -36,7 +54,7 @@ RUN wget https://github.com/redis/hiredis/archive/v${HIREDIS_VERSION}.tar.gz -O 
         && make install \
         && ldconfig \
     ) \
-    && rm -r hiredis    
+    && rm -r hiredis
 
 # Swoole extension
 RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz -O swoole.tar.gz \
@@ -51,4 +69,8 @@ RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz 
         && make install \
     ) \
     && rm -r swoole \
-    && docker-php-ext-enable swoole    
+    && docker-php-ext-enable swoole
+
+WORKDIR /app
+
+CMD ["composer"]
