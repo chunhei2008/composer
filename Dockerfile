@@ -14,11 +14,6 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev lib
   docker-php-ext-install -j${NPROC} gd && \
   apk del --no-cache freetype-dev libpng-dev libjpeg-turbo-dev
 
-RUN apk add --no-cache zlib-dev \
-    && docker-php-ext-configure zip --with-zlib-dir=/usr/include \
-    && docker-php-ext-install zip \
-    && apk del --no-cache zlib-dev
-
 # Version
 ENV PHPREDIS_VERSION 4.0.0
 ENV HIREDIS_VERSION 0.13.3
