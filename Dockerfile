@@ -3,6 +3,7 @@ FROM composer
 RUN composer config -g repo.packagist composer https://packagist.phpcomposer.com
 
 RUN docker-php-ext-install bcmath
+
 RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev libjpeg-turbo-dev && \
   docker-php-ext-configure gd \
     --with-gd \
@@ -12,7 +13,11 @@ RUN apk add --no-cache freetype libpng libjpeg-turbo freetype-dev libpng-dev lib
   NPROC=$(grep -c ^processor /proc/cpuinfo 2>/dev/null || 1) && \
   docker-php-ext-install -j${NPROC} gd && \
   apk del --no-cache freetype-dev libpng-dev libjpeg-turbo-dev
-RUN docker-php-ext-install zip
+
+RUN apk add --no-cache zlib-dev \
+    && docker-php-ext-configure zip --with-zlib-dir=/usr/include \
+    && docker-php-ext-install zip \
+    && apk del --no-cache zlib-dev
 
 # Version
 ENV PHPREDIS_VERSION 4.0.0
